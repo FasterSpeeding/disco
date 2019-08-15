@@ -7,6 +7,7 @@ Permissions = Enum(
     ADMINISTRATOR=1 << 3,
     MANAGE_CHANNELS=1 << 4,
     MANAGE_GUILD=1 << 5,
+    ADD_REACTIONS = 1 << 6,
     READ_MESSAGES=1 << 10,
     SEND_MESSAGES=1 << 11,
     SEND_TSS_MESSAGES=1 << 12,
