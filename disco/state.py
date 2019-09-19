@@ -302,6 +302,10 @@ class State(object):
 
         del self.guilds[event.guild_id].members[event.user.id]
 
+        if not [guild for guild in six.itervalues(self.guilds)
+                if user.id in guild.members]:
+            del self.users[event.user.id]
+
     def on_guild_members_chunk(self, event):
         if event.guild_id not in self.guilds:
             return
