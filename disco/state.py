@@ -281,8 +281,10 @@ class State(object):
 
         if event.member.guild_id not in self.guilds:
             return
-    
-        self.guilds[event.member.guild_id].member_count += 1
+
+        if self.guilds[event.member.guild_id].member_count is not UNSET:
+            self.guilds[event.member.guild_id].member_count += 1
+
         self.guilds[event.member.guild_id].members[event.member.id] = event.member
 
     def on_guild_member_update(self, event):
@@ -298,10 +300,12 @@ class State(object):
         if event.guild_id not in self.guilds:
             return
 
+        if self.guilds[event.guild_id].member_count is not UNSET:
+            self.guilds[event.guild_id].member_count -= 1
+
         if event.user.id not in self.guilds[event.guild_id].members:
             return
 
-        self[event.member.guild_id].guilds.member_count -= 1
         del self.guilds[event.guild_id].members[event.user.id]
 
         if not [guild for guild in six.itervalues(self.guilds)
@@ -321,6 +325,13 @@ class State(object):
                 self.users[member.id] = member.user
             else:
                 member.user = self.users[member.id]
+
+        if not event.presences:
+            return
+
+        for presence in event.presences:
+            if presence.user.id in self.users:
+                self.users[presence.user.id].presence = presence
 
     def on_guild_role_create(self, event):
         if event.guild_id not in self.guilds:
