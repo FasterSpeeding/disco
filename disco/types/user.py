@@ -25,6 +25,7 @@ class User(SlottedModel, with_equality('id'), with_hash('id')):
     verified = Field(bool)
     email = Field(text)
 
+    shared_guilds = Field(None)
     presence = Field(None)
 
     def get_avatar_url(self, still_format='webp', animated_format='gif', size=1024):

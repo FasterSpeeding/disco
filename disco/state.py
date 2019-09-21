@@ -191,7 +191,10 @@ class State(object):
 
         for member in six.itervalues(event.guild.members):
             if member.user.id not in self.users:
+                member.user.shared_guilds = [event.guild.id]
                 self.users[member.user.id] = member.user
+            elif self.users[member.user.id].shared_guilds is not UNSET:
+                self.users[member.user.id].shared_guilds.append(event.guild.id)
 
         for presence in event.presences:
             if presence.user.id in self.users:
@@ -213,6 +216,16 @@ class State(object):
 
     def on_guild_delete(self, event):
         if event.id in self.guilds:
+            for member in six.itervalues(self.guilds[event.id].members):
+                if (member.id not in self.users or
+                        self.users[member.id].shared_guilds is UNSET or
+                        event.id not in self.users[member.id].shared_guilds):
+                    continue
+
+                self.users[member.id].shared_guilds.remove(event.id)
+                if not self.users[member.id].shared_guilds:
+                    del self.users[member.id]
+
             # Just delete the guild, channel references will fall
             del self.guilds[event.id]
 
@@ -275,9 +288,12 @@ class State(object):
 
     def on_guild_member_add(self, event):
         if event.member.user.id not in self.users:
+            event.member.shared_guilds = [event.member.guild_id]
             self.users[event.member.user.id] = event.member.user
         else:
             event.member.user = self.users[event.member.user.id]
+            if event.member.user.shared_guilds is not UNSET:
+                event.member.user.shared_guilds.append(event.member.guild_id)
 
         if event.member.guild_id not in self.guilds:
             return
@@ -303,13 +319,16 @@ class State(object):
         if self.guilds[event.guild_id].member_count is not UNSET:
             self.guilds[event.guild_id].member_count -= 1
 
-        if event.user.id not in self.guilds[event.guild_id].members:
+        if event.user.id in self.guilds[event.guild_id].members:
+            del self.guilds[event.guild_id].members[event.user.id]
+
+        if event.user.id not in self.users or self.users[event.user.id].shared_guilds is UNSET:
             return
 
-        del self.guilds[event.guild_id].members[event.user.id]
+        if event.guild_id in self.users[event.user.id].shared_guilds:
+            self.users[event.user.id].shared_guilds.remove(event.guild_id)
 
-        if not [guild for guild in six.itervalues(self.guilds)
-                if event.user.id in guild.members]:
+        if not self.users[event.user.id].shared_guilds:
             del self.users[event.user.id]
 
     def on_guild_members_chunk(self, event):
@@ -322,9 +341,12 @@ class State(object):
             guild.members[member.id] = member
 
             if member.id not in self.users:
+                member.user.shared_guilds = [event.guild_id]
                 self.users[member.id] = member.user
             else:
                 member.user = self.users[member.id]
+                if member.user.shared_guilds is not UNSET and event.guild_id not in member.user.shared_guilds:
+                    member.user.shared_guilds.append(event.guild_id)
 
         if not event.presences:
             return

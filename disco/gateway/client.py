@@ -278,7 +278,7 @@ class GatewayClient(LoggingClass):
         payload.update(optional(
             # This is simply Discord sticking to an unfortunate naming scheme...
             user_ids=user_id_or_ids,
-            query=query or '' if not user_id_or_ids else None,
+            query=query or '' if user_id_or_ids is None else None,
             presences=presences,
         ))
         self.send(OPCode.REQUEST_GUILD_MEMBERS, payload)
