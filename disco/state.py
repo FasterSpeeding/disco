@@ -293,7 +293,8 @@ class State(object):
             self.users[event.member.user.id] = event.member.user
         else:
             event.member.user = self.users[event.member.user.id]
-            if event.member.user.shared_guilds is not UNSET and event.member.guild_id not in event.member.user.shared_guilds:
+            if (event.member.user.shared_guilds is not UNSET and
+                    event.member.guild_id not in event.member.user.shared_guilds):
                 event.member.user.shared_guilds.append(event.member.guild_id)
 
         if event.member.guild_id not in self.guilds:
