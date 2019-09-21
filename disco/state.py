@@ -193,7 +193,8 @@ class State(object):
             if member.user.id not in self.users:
                 member.user.shared_guilds = [event.guild.id]
                 self.users[member.user.id] = member.user
-            elif self.users[member.user.id].shared_guilds is not UNSET:
+            elif (self.users[member.user.id].shared_guilds is not UNSET and
+                    event.guild.id not in self.users[member.user.id].shared_guilds):
                 self.users[member.user.id].shared_guilds.append(event.guild.id)
 
         for presence in event.presences:
@@ -288,11 +289,11 @@ class State(object):
 
     def on_guild_member_add(self, event):
         if event.member.user.id not in self.users:
-            event.member.shared_guilds = [event.member.guild_id]
+            event.member.user.shared_guilds = [event.member.guild_id]
             self.users[event.member.user.id] = event.member.user
         else:
             event.member.user = self.users[event.member.user.id]
-            if event.member.user.shared_guilds is not UNSET:
+            if event.member.user.shared_guilds is not UNSET and event.member.guild_id not in event.member.user.shared_guilds:
                 event.member.user.shared_guilds.append(event.member.guild_id)
 
         if event.member.guild_id not in self.guilds:
