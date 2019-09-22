@@ -227,7 +227,10 @@ class State(object):
                 if not self.users[member.id].shared_guilds:
                     del self.users[member.id]
 
-            # Just delete the guild, channel references will fall
+            for channel in six.iterkeys(self.guilds[event.id].channels):
+                if channel in self.channels:
+                    del self.channels[channel]
+
             del self.guilds[event.id]
 
         if event.id in self.voice_clients:
@@ -250,6 +253,9 @@ class State(object):
                 self.channels[event.channel.id].after_load()
 
     def on_channel_delete(self, event):
+        if event.channel.id in self.channels:
+            del self.channels[event.channel.id]
+
         if event.channel.is_guild and event.channel.guild and event.channel.id in event.channel.guild.channels:
             del event.channel.guild.channels[event.channel.id]
         elif event.channel.is_dm and event.channel.id in self.dms:
