@@ -191,11 +191,11 @@ class State(object):
 
         for member in six.itervalues(event.guild.members):
             if member.user.id not in self.users:
-                member.user.shared_guilds = [event.guild.id]
+                member.user.shared_guilds = {event.guild.id}
                 self.users[member.user.id] = member.user
             elif (self.users[member.user.id].shared_guilds is not UNSET and
                     event.guild.id not in self.users[member.user.id].shared_guilds):
-                self.users[member.user.id].shared_guilds.append(event.guild.id)
+                self.users[member.user.id].shared_guilds.add(event.guild.id)
 
         for presence in event.presences:
             if presence.user.id in self.users:
@@ -223,7 +223,7 @@ class State(object):
                         event.id not in self.users[member.id].shared_guilds):
                     continue
 
-                self.users[member.id].shared_guilds.remove(event.id)
+                self.users[member.id].shared_guilds.discard(event.id)
                 if not self.users[member.id].shared_guilds:
                     del self.users[member.id]
 
@@ -295,13 +295,13 @@ class State(object):
 
     def on_guild_member_add(self, event):
         if event.member.user.id not in self.users:
-            event.member.user.shared_guilds = [event.member.guild_id]
+            event.member.user.shared_guilds = {event.member.guild_id}
             self.users[event.member.user.id] = event.member.user
         else:
             event.member.user = self.users[event.member.user.id]
             if (event.member.user.shared_guilds is not UNSET and
                     event.member.guild_id not in event.member.user.shared_guilds):
-                event.member.user.shared_guilds.append(event.member.guild_id)
+                event.member.user.shared_guilds.add(event.member.guild_id)
 
         if event.member.guild_id not in self.guilds:
             return
@@ -334,7 +334,7 @@ class State(object):
             return
 
         if event.guild_id in self.users[event.user.id].shared_guilds:
-            self.users[event.user.id].shared_guilds.remove(event.guild_id)
+            self.users[event.user.id].shared_guilds.discard(event.guild_id)
 
         if not self.users[event.user.id].shared_guilds:
             del self.users[event.user.id]
@@ -349,12 +349,12 @@ class State(object):
             guild.members[member.id] = member
 
             if member.id not in self.users:
-                member.user.shared_guilds = [event.guild_id]
+                member.user.shared_guilds = {event.guild_id}
                 self.users[member.id] = member.user
             else:
                 member.user = self.users[member.id]
                 if member.user.shared_guilds is not UNSET and event.guild_id not in member.user.shared_guilds:
-                    member.user.shared_guilds.append(event.guild_id)
+                    member.user.shared_guilds.add(event.guild_id)
 
         if not event.presences:
             return
@@ -402,11 +402,14 @@ class State(object):
         #  update to update both their presence and the cached user object.
         if user.id in self.users:
             self.users[user.id].inplace_update(user)
+            if event.guild_id not in self.users[user.id].shared_guilds:
+                self.users[user.id].shared_guilds.add(event.guild_id)
         else:
             # Otherwise this user does not exist in our local cache, so we can
             #  use this opportunity to add them. They will quickly fall out of
             #  scope and be deleted if they aren't used below
             self.users[user.id] = user
+            self.users[user.id].shared_guilds = {event.guild_id}
 
         # Some updates come with a guild_id and roles the user is in, we should
         #  use this to update the guild member, but only if we have the guild
