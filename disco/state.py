@@ -104,6 +104,7 @@ class State(object):
 
         self.ready = Event()
         self.guilds_waiting_sync = 0
+        self.dms_waiting_association = {}
 
         self.me = None
         self.dms = HashMap()
@@ -140,6 +141,34 @@ class State(object):
             func = 'on_' + underscore(event)
             self.listeners.append(self.client.events.on(event, getattr(self, func), priority=Priority.AFTER))
 
+    def remove_expired_user(self, user_id):
+        if user_id not in self.users:
+            return
+
+        if (self.users[user_id].shared_guilds is not UNSET and not self.users[user_id].shared_guilds and
+            # If shard count is 1 then we can assume that the user can no longer DM the bot.
+            # Otherwise, we will keep the user cached in-case they can access other shards.
+                (not self.users[user_id].open_dms or self.client.config.shard_count == 1)):
+            if self.users[user_id].open_dms:
+                for dm in self.users[user_id].open_dms:
+                    if dm in self.dms:
+                        del dms[dm]
+                    if dm in self.channels:
+                        del self.channels[dm]
+
+            del self.users[user_id]
+
+    def add_associated_dms(self, user_id):
+        if user_id not in self.users:
+            return
+
+        if user_id in self.dms_waiting_association:
+            if self.users[user_id].open_dms is UNSET:
+                self.users[user_id].open_dms = set()
+
+            self.users[user_id].open_dms.update(self.dms_waiting_association[user_id])
+            del self.dms_waiting_association[user_id]
+
     def fill_messages(self, channel):
         for message in reversed(next(channel.messages_iter(bulk=True))):
             self.messages[channel.id].append(
@@ -148,10 +177,16 @@ class State(object):
     def on_ready(self, event):
         self.me = event.user
         self.guilds_waiting_sync = len(event.guilds)
+        self.dms_waiting_association = {}
 
         for dm in event.private_channels:
             self.dms[dm.id] = dm
             self.channels[dm.id] = dm
+            for recipient in six.iterkeys(dm.recipients):
+                if recipient not in self.dms_waiting_association:
+                    self.dms_waiting_association[recipient] = set()
+
+                self.dms_waiting_association[recipient].add(dm.id)
 
     def on_message_create(self, event):
         if self.config.track_messages:
@@ -193,9 +228,10 @@ class State(object):
             if member.user.id not in self.users:
                 member.user.shared_guilds = {event.guild.id}
                 self.users[member.user.id] = member.user
-            elif (self.users[member.user.id].shared_guilds is not UNSET and
-                    event.guild.id not in self.users[member.user.id].shared_guilds):
+            elif self.users[member.user.id].shared_guilds is not UNSET:
                 self.users[member.user.id].shared_guilds.add(event.guild.id)
+
+            self.add_associated_dms(member.id)
 
         for presence in event.presences:
             if presence.user.id in self.users:
@@ -218,14 +254,11 @@ class State(object):
     def on_guild_delete(self, event):
         if event.id in self.guilds:
             for member in six.itervalues(self.guilds[event.id].members):
-                if (member.id not in self.users or
-                        self.users[member.id].shared_guilds is UNSET or
-                        event.id not in self.users[member.id].shared_guilds):
+                if member.id not in self.users or self.users[member.id].shared_guilds is UNSET:
                     continue
 
                 self.users[member.id].shared_guilds.discard(event.id)
-                if not self.users[member.id].shared_guilds:
-                    del self.users[member.id]
+                self.remove_expired_user(member.id)
 
             for channel in six.iterkeys(self.guilds[event.id].channels):
                 if channel in self.channels:
@@ -237,12 +270,17 @@ class State(object):
             self.voice_clients[event.id].disconnect()
 
     def on_channel_create(self, event):
+        self.channels[event.channel.id] = event.channel
         if event.channel.is_guild and event.channel.guild_id in self.guilds:
             self.guilds[event.channel.guild_id].channels[event.channel.id] = event.channel
-            self.channels[event.channel.id] = event.channel
         elif event.channel.is_dm:
             self.dms[event.channel.id] = event.channel
-            self.channels[event.channel.id] = event.channel
+            for recipient in six.iterkeys(event.channel.recipients):
+                if recipient in self.users:
+                    if self.users[recipient].open_dms is UNSET:
+                        self.users[recipient].open_dms = set()
+
+                    self.users[recipient].open_dms.add(event.channel.id)
 
     def on_channel_update(self, event):
         if event.channel.id in self.channels:
@@ -253,13 +291,20 @@ class State(object):
                 self.channels[event.channel.id].after_load()
 
     def on_channel_delete(self, event):
-        if event.channel.id in self.channels:
-            del self.channels[event.channel.id]
-
         if event.channel.is_guild and event.channel.guild and event.channel.id in event.channel.guild.channels:
             del event.channel.guild.channels[event.channel.id]
-        elif event.channel.is_dm and event.channel.id in self.dms:
-            del self.dms[event.channel.id]
+        elif event.channel.is_dm:
+            for recipient in six.iterkeys(event.channel.recipients):
+                if recipient in self.users and self.users[recipient].open_dms is not UNSET:
+                    self.users[recipient].open_dms.discard(event.channel.id)
+
+                self.remove_expired_user(event.user.id)
+
+            if event.channel.id in self.dms:
+                del self.dms[event.channel.id]
+
+        if event.channel.id in self.channels:
+            del self.channels[event.channel.id]
 
     def on_voice_server_update(self, event):
         if event.guild_id not in self.voice_clients:
@@ -299,8 +344,7 @@ class State(object):
             self.users[event.member.user.id] = event.member.user
         else:
             event.member.user = self.users[event.member.user.id]
-            if (event.member.user.shared_guilds is not UNSET and
-                    event.member.guild_id not in event.member.user.shared_guilds):
+            if event.member.user.shared_guilds is not UNSET:
                 event.member.user.shared_guilds.add(event.member.guild_id)
 
         if event.member.guild_id not in self.guilds:
@@ -310,6 +354,7 @@ class State(object):
             self.guilds[event.member.guild_id].member_count += 1
 
         self.guilds[event.member.guild_id].members[event.member.id] = event.member
+        self.add_associated_dms(event.member.id)
 
     def on_guild_member_update(self, event):
         if event.member.guild_id not in self.guilds:
@@ -333,11 +378,8 @@ class State(object):
         if event.user.id not in self.users or self.users[event.user.id].shared_guilds is UNSET:
             return
 
-        if event.guild_id in self.users[event.user.id].shared_guilds:
-            self.users[event.user.id].shared_guilds.discard(event.guild_id)
-
-        if not self.users[event.user.id].shared_guilds:
-            del self.users[event.user.id]
+        self.users[event.user.id].shared_guilds.discard(event.guild_id)
+        self.remove_expired_user(event.user.id)
 
     def on_guild_members_chunk(self, event):
         if event.guild_id not in self.guilds:
@@ -353,8 +395,10 @@ class State(object):
                 self.users[member.id] = member.user
             else:
                 member.user = self.users[member.id]
-                if member.user.shared_guilds is not UNSET and event.guild_id not in member.user.shared_guilds:
+                if member.user.shared_guilds is not UNSET:
                     member.user.shared_guilds.add(event.guild_id)
+
+            self.add_associated_dms(member.id)
 
         if not event.presences:
             return
@@ -402,14 +446,16 @@ class State(object):
         #  update to update both their presence and the cached user object.
         if user.id in self.users:
             self.users[user.id].inplace_update(user)
-            if event.guild_id not in self.users[user.id].shared_guilds:
+            if guild_id:
                 self.users[user.id].shared_guilds.add(event.guild_id)
         else:
             # Otherwise this user does not exist in our local cache, so we can
             #  use this opportunity to add them. They will quickly fall out of
             #  scope and be deleted if they aren't used below
             self.users[user.id] = user
-            self.users[user.id].shared_guilds = {event.guild_id}
+            if event.guild_id:
+                self.users[user.id].shared_guilds = {event.guild_id}
+            self.add_associated_dms(user.id)
 
         # Some updates come with a guild_id and roles the user is in, we should
         #  use this to update the guild member, but only if we have the guild

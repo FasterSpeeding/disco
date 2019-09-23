@@ -25,6 +25,7 @@ class User(SlottedModel, with_equality('id'), with_hash('id')):
     verified = Field(bool)
     email = Field(text)
 
+    open_dms = Field(None)
     shared_guilds = Field(None)
     presence = Field(None)
 
