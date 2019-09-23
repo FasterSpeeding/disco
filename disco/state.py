@@ -152,7 +152,7 @@ class State(object):
             if self.users[user_id].open_dms:
                 for dm in self.users[user_id].open_dms:
                     if dm in self.dms:
-                        del dms[dm]
+                        del self.dms[dm]
                     if dm in self.channels:
                         del self.channels[dm]
 
@@ -446,7 +446,7 @@ class State(object):
         #  update to update both their presence and the cached user object.
         if user.id in self.users:
             self.users[user.id].inplace_update(user)
-            if guild_id:
+            if event.guild_id:
                 self.users[user.id].shared_guilds.add(event.guild_id)
         else:
             # Otherwise this user does not exist in our local cache, so we can
