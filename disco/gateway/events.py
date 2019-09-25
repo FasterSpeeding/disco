@@ -339,7 +339,7 @@ class GuildMembersChunk(GatewayEvent):
     members : list[:class:`disco.types.guild.GuildMember`]
         The chunk of members.
     not_found : list[snowflake]
-        An array invalid requested guild members.
+        An array of invalid requested guild members.
     presences : list[:class:`disco.types.user.Presence`]
         An array of requested member presence states.
     """
