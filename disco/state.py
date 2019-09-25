@@ -281,6 +281,11 @@ class State(object):
                         self.users[recipient].cached_dms = set()
 
                     self.users[recipient].cached_dms.add(event.channel.id)
+                else:
+                    if recipient not in self.dms_waiting_association:
+                        self.dms_waiting_association[recipient] = set()
+
+                    self.dms_waiting_association[recipient].add(event.channel.id)
 
     def on_channel_update(self, event):
         if event.channel.id in self.channels:
