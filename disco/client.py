@@ -24,7 +24,8 @@ class ClientConfig(Config):
     shard_id : int
         The shard ID for the current client instance.
     shard_count : int
-        The total count of shards running.
+    ratelimit_precision: str
+        The precision of ratelimit headers returned by the api (e.g second, millisecond)
     max_reconnects : int
         The maximum number of connection retries to make before giving up (0 = never give up).
     log_level: str
@@ -42,6 +43,7 @@ class ClientConfig(Config):
     token = ''
     shard_id = 0
     shard_count = 1
+    ratelimit_precision = 'second'
     max_reconnects = 5
     log_level = 'info'
 

@@ -67,7 +67,7 @@ class APIClient(LoggingClass):
         super(APIClient, self).__init__()
 
         self.client = client
-        self.http = HTTPClient(token, self._after_requests)
+        self.http = HTTPClient(token, self._after_requests, client.config.ratelimit_precision if client else None)
 
         self._captures = local()
 

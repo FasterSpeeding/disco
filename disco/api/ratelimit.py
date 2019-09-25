@@ -22,11 +22,11 @@ class RouteState(LoggingClass):
     ---------
     route : tuple(HTTPMethod, str)
         The route which this RouteState is for.
-    remaining : int
+    remaining : float
         The number of remaining requests to the route before the rate limit will
         be hit, triggering a 429 response.
-    reset_time : int
-        A unix epoch timestamp (in seconds) after which this rate limit is reset
+    reset_time : float
+        A unix epoch timestamp (in (mili)seconds) after which this rate limit is reset
     event : :class:`gevent.event.Event`
         An event that is used to block all requests while a route is in the
         cooldown stage.
@@ -70,8 +70,8 @@ class RouteState(LoggingClass):
         if 'X-RateLimit-Remaining' not in response.headers:
             return
 
-        self.remaining = int(response.headers.get('X-RateLimit-Remaining'))
-        self.reset_time = int(response.headers.get('X-RateLimit-Reset'))
+        self.remaining = float(response.headers.get('X-RateLimit-Remaining'))
+        self.reset_time = float(response.headers.get('X-RateLimit-Reset'))
 
     def wait(self, timeout=None):
         """
@@ -98,7 +98,7 @@ class RouteState(LoggingClass):
             raise Exception('Cannot cooldown for negative time period; check clock sync')
 
         self.event = gevent.event.Event()
-        delay = (self.reset_time - time.time()) + .5
+        delay = (self.reset_time - time.time()) + .25
         self.log.debug('Cooling down bucket %s for %s seconds', self, delay)
         gevent.sleep(delay)
         self.event.set()

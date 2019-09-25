@@ -193,7 +193,7 @@ class HTTPClient(LoggingClass):
     BASE_URL = 'https://discordapp.com/api/v7'
     MAX_RETRIES = 5
 
-    def __init__(self, token, after_request=None):
+    def __init__(self, token, after_request=None, ratelimit_precision=None):
         super(HTTPClient, self).__init__()
 
         py_version = '{}.{}.{}'.format(
@@ -214,6 +214,9 @@ class HTTPClient(LoggingClass):
 
         self.after_request = after_request
         self.session = requests.Session()
+
+        if ratelimit_precision:
+            self.session.headers['X-RateLimit-Precision'] = ratelimit_precision
 
     def __call__(self, route, args=None, **kwargs):
         return self.call(route, args, **kwargs)
