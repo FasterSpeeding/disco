@@ -25,9 +25,11 @@ class User(SlottedModel, with_equality('id'), with_hash('id')):
     verified = Field(bool)
     email = Field(text)
 
+    presence = Field(None)
+    # cached_dms and cached_guilds are sets based on cached events used for cache control
+    #  and may not always be accurate (e.g. when guild_subscriptions are disabled).
     cached_dms = Field(None)
     cached_guilds = Field(None)
-    presence = Field(None)
 
     def get_avatar_url(self, still_format='webp', animated_format='gif', size=1024):
         if not self.avatar:

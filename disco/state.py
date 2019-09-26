@@ -151,6 +151,11 @@ class State(object):
                 (not self.users[user_id].cached_dms or self.client.config.shard_count == 1)):
             if self.users[user_id].cached_dms:
                 for dm in self.users[user_id].cached_dms:
+                    # If any other of the DM's recipients are cached then we will leave the DM object in the cache..
+                    if dm not in self.dms or not any([user in self.users for user
+                                                      in six.iterkeys(self.dms[dm].recipients) if user != user_id]):
+                        continue
+
                     if dm in self.dms:
                         del self.dms[dm]
                     if dm in self.channels:
@@ -270,11 +275,12 @@ class State(object):
             self.voice_clients[event.id].disconnect()
 
     def on_channel_create(self, event):
-        self.channels[event.channel.id] = event.channel
         if event.channel.is_guild and event.channel.guild_id in self.guilds:
             self.guilds[event.channel.guild_id].channels[event.channel.id] = event.channel
+            self.channels[event.channel.id] = event.channel
         elif event.channel.is_dm:
             self.dms[event.channel.id] = event.channel
+            self.channels[event.channel.id] = event.channel
             for recipient in six.iterkeys(event.channel.recipients):
                 if recipient in self.users:
                     if self.users[recipient].cached_dms is UNSET:
@@ -303,7 +309,7 @@ class State(object):
                 if recipient in self.users and self.users[recipient].cached_dms is not UNSET:
                     self.users[recipient].cached_dms.discard(event.channel.id)
 
-                self.remove_expired_user(event.user.id)
+                self.remove_expired_user(recipient)
 
             if event.channel.id in self.dms:
                 del self.dms[event.channel.id]
@@ -460,6 +466,7 @@ class State(object):
             self.users[user.id] = user
             if event.guild_id:
                 self.users[user.id].cached_guilds = {event.guild_id}
+
             self.add_associated_dms(user.id)
 
         # Some updates come with a guild_id and roles the user is in, we should
