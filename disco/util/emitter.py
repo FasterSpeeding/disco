@@ -120,7 +120,7 @@ class Emitter(LoggingClass):
             try:
                 listener(*args, **kwargs)
             except Exception as e:
-                self.log.warning('AFTER {} event handler `{}` raised {}: {}'.format(
+                self.log.warning('BEFORE {} event handler `{}` raised {}: {}'.format(
                     name,
                     listener.callback.__name__,
                     e.__class__.__name__,
