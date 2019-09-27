@@ -151,9 +151,9 @@ class State(object):
                 (not self.users[user_id].cached_dms or self.client.config.shard_count == 1)):
             if self.users[user_id].cached_dms:
                 for dm in self.users[user_id].cached_dms:
-                    # If any other of the DM's recipients are cached then we will leave the DM object in the cache..
-                    if dm not in self.dms or not any([user in self.users for user
-                                                      in six.iterkeys(self.dms[dm].recipients) if user != user_id]):
+                    # If any of the DM's other recipients are cached then we will leave the DM object in the cache.
+                    if dm not in self.dms or any([user in self.users for user
+                                                  in six.iterkeys(self.dms[dm].recipients) if user != user_id]):
                         continue
 
                     if dm in self.dms:
@@ -361,7 +361,9 @@ class State(object):
         if event.member.guild_id not in self.guilds:
             return
 
-        if self.guilds[event.member.guild_id].member_count is not UNSET:
+        if (self.guilds[event.member.guild_id].member_count is not UNSET and
+            # Avoid adding duplicate events to member_count.
+                event.member.id not in self.guilds[event.member.guild_id].members):
             self.guilds[event.member.guild_id].member_count += 1
 
         self.guilds[event.member.guild_id].members[event.member.id] = event.member
@@ -380,7 +382,9 @@ class State(object):
         if event.guild_id not in self.guilds:
             return
 
-        if self.guilds[event.guild_id].member_count is not UNSET:
+        if (self.guilds[event.guild_id].member_count is not UNSET and
+            # Avoid subtracting duplicate events from member_count.
+                event.user.id in self.guilds[event.guild_id].members):
             self.guilds[event.guild_id].member_count -= 1
 
         if event.user.id in self.guilds[event.guild_id].members:

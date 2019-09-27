@@ -4,6 +4,8 @@ from collections import defaultdict
 from gevent.event import AsyncResult
 from gevent.queue import Queue, Full
 
+from disco.util.logging import LoggingClass
+
 
 class Priority(object):
     # BEFORE is the most dangerous priority level. Every event that flows through
@@ -106,7 +108,7 @@ class EmitterSubscription(object):
         self.detach(emitter)
 
 
-class Emitter(object):
+class Emitter(LoggingClass):
     def __init__(self):
         self.event_handlers = {
             k: defaultdict(list) for k in Priority.ALL
@@ -117,14 +119,26 @@ class Emitter(object):
         for listener in self.event_handlers[Priority.BEFORE].get(name, []):
             try:
                 listener(*args, **kwargs)
-            except Exception:
+            except Exception as e:
+                self.log.warning('AFTER {} event handler `{}` raised {}: {}'.format(
+                    name,
+                    listener.callback.__name__,
+                    e.__class__.__name__,
+                    str(e),
+                ))
                 pass
 
         # Next execute all AFTER handlers sequentially
         for listener in self.event_handlers[Priority.AFTER].get(name, []):
             try:
                 listener(*args, **kwargs)
-            except Exception:
+            except Exception as e:
+                self.log.warning('AFTER {} event handler `{}` raised {}: {}'.format(
+                    name,
+                    listener.callback.__name__,
+                    e.__class__.__name__,
+                    str(e),
+                ))
                 pass
 
         # Next enqueue all sequential handlers. This just puts stuff into a queue
