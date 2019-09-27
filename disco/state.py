@@ -156,8 +156,7 @@ class State(object):
                                                   in six.iterkeys(self.dms[dm].recipients) if user != user_id]):
                         continue
 
-                    if dm in self.dms:
-                        del self.dms[dm]
+                    del self.dms[dm]
                     if dm in self.channels:
                         del self.channels[dm]
 
