@@ -307,6 +307,8 @@ class State(object):
             for recipient in six.iterkeys(event.channel.recipients):
                 if recipient in self.users and self.users[recipient].cached_dms is not UNSET:
                     self.users[recipient].cached_dms.discard(event.channel.id)
+                elif recipient in self.dms_waiting_association:
+                    self.dms_waiting_association[recipient].discard(event.channel.id)
 
                 self.remove_expired_user(recipient)
 
@@ -357,6 +359,7 @@ class State(object):
             if event.member.user.cached_guilds is not UNSET:
                 event.member.user.cached_guilds.add(event.member.guild_id)
 
+        self.add_associated_dms(event.member.id)
         if event.member.guild_id not in self.guilds:
             return
 
@@ -366,7 +369,6 @@ class State(object):
             self.guilds[event.member.guild_id].member_count += 1
 
         self.guilds[event.member.guild_id].members[event.member.id] = event.member
-        self.add_associated_dms(event.member.id)
 
     def on_guild_member_update(self, event):
         if event.member.guild_id not in self.guilds:
