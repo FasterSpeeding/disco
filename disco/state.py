@@ -152,8 +152,8 @@ class State(object):
             if self.users[user_id].cached_dms:
                 for dm in self.users[user_id].cached_dms:
                     # If any of the DM's other recipients are cached then we will leave the DM object in the cache.
-                    if dm not in self.dms or any([user in self.users for user
-                                                  in six.iterkeys(self.dms[dm].recipients) if user != user_id]):
+                    if dm not in self.dms or any(user in self.users for user
+                                                 in six.iterkeys(self.dms[dm].recipients) if user != user_id):
                         continue
 
                     del self.dms[dm]
