@@ -126,7 +126,6 @@ class Emitter(LoggingClass):
                     e.__class__.__name__,
                     str(e),
                 ))
-                pass
 
         # Next execute all AFTER handlers sequentially
         for listener in self.event_handlers[Priority.AFTER].get(name, []):
@@ -139,7 +138,6 @@ class Emitter(LoggingClass):
                     e.__class__.__name__,
                     str(e),
                 ))
-                pass
 
         # Next enqueue all sequential handlers. This just puts stuff into a queue
         #  without blocking, so we don't have to worry too much
