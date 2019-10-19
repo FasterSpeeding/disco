@@ -1,3 +1,4 @@
+import json
 import requests
 import random
 import gevent
@@ -6,6 +7,7 @@ import sys
 
 from disco import VERSION as disco_version
 from requests import __version__ as requests_version
+from disco.util.json import JSONEncoder
 from disco.util.logging import LoggingClass
 from disco.api.ratelimit import RateLimiter
 
@@ -256,6 +258,15 @@ class HTTPClient(LoggingClass):
             kwargs['headers'].update(self.headers)
         else:
             kwargs['headers'] = self.headers
+
+        # Ensure our custom encoder is used for json data.
+        json_data = kwargs.pop('json', None)
+        if json_data:
+            kwargs['data'] = json.dumps(json_data, cls=JSONEncoder)
+            if 'headers' not in kwargs:
+                kwargs['headers'] = {}
+
+            kwargs['headers']['content-type'] = 'application/json'
 
         # Build the bucket URL
         args = {k: to_bytes(v) for k, v in six.iteritems(args)}

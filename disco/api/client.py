@@ -9,6 +9,7 @@ from six.moves.urllib.parse import quote
 from disco.api.http import Routes, HTTPClient, to_bytes
 from disco.util.logging import LoggingClass
 from disco.util.sanitize import S
+from disco.util.json import JSONEncoder
 from disco.types.user import User
 from disco.types.message import Message
 from disco.types.guild import Guild, GuildMember, GuildBan, Role, GuildEmoji, AuditLogEntry
@@ -179,7 +180,7 @@ class APIClient(LoggingClass):
             r = self.http(
                 Routes.CHANNELS_MESSAGES_CREATE,
                 dict(channel=channel),
-                data={'payload_json': json.dumps(payload)},
+                data={'payload_json': json.dumps(payload, cls=JSONEncoder)},
                 files=files,
             )
         else:
