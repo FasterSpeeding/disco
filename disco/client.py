@@ -21,6 +21,8 @@ class ClientConfig(Config):
     token : str
         Discord authentication token, can be validated using the
         `disco.util.token.is_valid_token` function.
+    secret : str
+        Discord client secret used for the oauth2 flow.
     shard_id : int
         The shard ID for the current client instance.
     shard_count : int
@@ -42,6 +44,7 @@ class ClientConfig(Config):
     """
 
     token = ''
+    secret = ''
     shard_id = 0
     shard_count = 1
     guild_subscriptions = True

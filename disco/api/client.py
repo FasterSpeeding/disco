@@ -11,7 +11,8 @@ from disco.util.logging import LoggingClass
 from disco.util.sanitize import S
 from disco.types.user import User
 from disco.types.message import Message
-from disco.types.guild import Guild, GuildMember, GuildBan, PruneCount, Role, GuildEmoji, AuditLogEntry
+from disco.types.oauth import AccessToken, Application, Connection
+from disco.types.guild import Guild, GuildMember, GuildBan, PruneCount, Role, GuildEmoji, AuditLogEntry, Integration
 from disco.types.channel import Channel
 from disco.types.invite import Invite
 from disco.types.voice import VoiceRegion
@@ -30,6 +31,10 @@ def optional(**kwargs):
 
 def _reason_header(value):
     return optional(**{'X-Audit-Log-Reason': quote(to_bytes(value)) if value else None})
+
+
+def _oauth2_header(token):
+    return optional(**{'Authorization': 'Bearer {}'.format(token) if token else None})
 
 
 class Responses(list):
@@ -100,6 +105,31 @@ class APIClient(LoggingClass):
     def gateway_bot_get(self):
         data = self.http(Routes.GATEWAY_BOT_GET).json()
         return data
+
+    def oauth2_token_get(self, grant_type, scope, refresh_token=None, redirect_url=None):
+        payload = {
+            'client_id': self.client.state.me.id,
+            'client_secret': self.client.config.secret,
+            'grant_type': grant_type,
+            'scope': scope,
+        }
+        payload.update(optional(
+            refresh_token=refresh_token,
+            redirect_url=redirect_url,
+        ))
+        r = self.http(Routes.OAUTH2_TOKEN, data=payload)
+        return AccessToken.create(self.client, r.json())
+
+    def oauth_token_revoke(self, token):
+        self.http(Routes.OAUTH2_TOKEN_REVOKE, data={
+            'client_id': self.client.state.me.id,
+            'client_secret': self.client.config.secret,
+            'token': token,
+        })
+
+    def oauth2_applications_me_get(self):
+        r = self.http(Routes.OAUTH2_APPLICATIONS_ME)
+        return Application.create(self.client, r.json())
 
     def channels_get(self, channel):
         r = self.http(Routes.CHANNELS_GET, dict(channel=channel))
@@ -512,6 +542,37 @@ class APIClient(LoggingClass):
         r = self.http(Routes.GUILDS_INVITES_LIST, dict(guild=guild))
         return Invite.create_map(self.client, r.json())
 
+    def guilds_integrations_list(self, guild):
+        r = self.http(Routes.GUILDS_INTEGRATIONS_LIST, dict(guild=guild))
+        return Integration.create_map(self.client, r.json())
+
+    def guilds_integrations_create(self, guild, type, id):
+        r = self.http(Routes.GUILDS_INTEGRATIONS_CREATE, dict(guild=guild), json={"type": type, "id": id})
+        return Integration.create(r.json())
+
+    def guilds_integrations_modify(
+            self,
+            guild,
+            integration,
+            expire_behavior=None,
+            expire_grace_period=None,
+            enable_emoticons=None):
+
+        self.http(
+            Routes.GUILDS_INTEGRATIONS_MODIFY,
+            dict(guild=guild, integration=integration),
+            json=optional(
+                expire_behavior=expire_behavior,
+                expire_grace_period=expire_grace_period,
+                enable_emoticons=enable_emoticons,
+            ))
+
+    def guilds_integrations_delete(self, guild, integration):
+        self.http(Routes.GUILDS_INTEGRATIONS_DELETE, dict(guild=guild, integration=integration))
+
+    def guilds_integrations_sync(self, guild, integration):
+        self.http(Routes.GUILDS_INTEGRATIONS_SYNC, dict(guild=guild, integration=integration))
+
     def guilds_vanity_url_get(self, guild):
         r = self.http(Routes.GUILDS_VANITY_URL_GET, dict(guild=guild))
         return Invite.create(self.client, r.json())
@@ -568,12 +629,17 @@ class APIClient(LoggingClass):
         r = self.http(Routes.USERS_GET, dict(user=user))
         return User.create(self.client, r.json())
 
-    def users_me_get(self):
-        return User.create(self.client, self.http(Routes.USERS_ME_GET).json())
+    def users_me_get(self, bearer_token=None):
+        r = self.http(Routes.USERS_ME_GET, headers=_oauth2_header(bearer_token))
+        return User.create(self.client, r.json())
 
     def users_me_patch(self, payload):
         r = self.http(Routes.USERS_ME_PATCH, json=payload)
         return User.create(self.client, r.json())
+
+    def users_me_guilds_list(self, bearer_token=None):
+        r = self.http(Routes.USERS_ME_GUILDS_LIST, headers=_oauth2_header(bearer_token))
+        return Guild.create_map(self.client, r.json())
 
     def users_me_guilds_delete(self, guild):
         self.http(Routes.USERS_ME_GUILDS_DELETE, dict(guild=guild))
@@ -583,6 +649,10 @@ class APIClient(LoggingClass):
             'recipient_id': recipient_id,
         })
         return Channel.create(self.client, r.json())
+
+    def users_me_connections_list(self, bearer_token=None):
+        r = self.http(Routes.USERS_ME_CONNECTIONS_LIST, headers=_oauth2_header(bearer_token))
+        return Connection.create_map(self.client, r.json())
 
     def invites_get(self, invite):
         r = self.http(Routes.INVITES_GET, dict(invite=invite))
