@@ -1,8 +1,9 @@
 from disco.types.base import (
-    SlottedModel, Field, ListField, snowflake, text, enum,
+    SlottedModel, Field, ListField, AutoDictField, snowflake, text, enum,
 )
 from disco.types.guild import Integration
 from disco.types.user import User
+from disco.util.snowflake import to_snowflake
 
 
 class AccessToken(SlottedModel):
@@ -48,6 +49,13 @@ class Application(SlottedModel):
     primary_sku_id = Field(snowflake)
     slug = Field(text)
     cover_image = Field(text)
+
+    def user_is_owner(self, user):
+        user = to_snowflake(user)
+        if user == self.owner.id:
+            return True
+
+        return any(user == member.user.id for member in self.team.members)
 
     def get_icon_url(self, fmt='webp', size=1024):
         if not self.icon:

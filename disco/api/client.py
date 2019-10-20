@@ -565,7 +565,7 @@ class APIClient(LoggingClass):
                 expire_behavior=expire_behavior,
                 expire_grace_period=expire_grace_period,
                 enable_emoticons=enable_emoticons,
-            ))
+        ))
 
     def guilds_integrations_delete(self, guild, integration):
         self.http(Routes.GUILDS_INTEGRATIONS_DELETE, dict(guild=guild, integration=integration))
@@ -639,7 +639,7 @@ class APIClient(LoggingClass):
 
     def users_me_guilds_list(self, bearer_token=None):
         r = self.http(Routes.USERS_ME_GUILDS_LIST, headers=_oauth2_header(bearer_token))
-        return Guild.create_map(self.client, r.json())
+        return Guild.create_hash(self.client, 'id', r.json())
 
     def users_me_guilds_delete(self, guild):
         self.http(Routes.USERS_ME_GUILDS_DELETE, dict(guild=guild))
