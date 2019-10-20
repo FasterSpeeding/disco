@@ -565,7 +565,7 @@ class APIClient(LoggingClass):
                 expire_behavior=expire_behavior,
                 expire_grace_period=expire_grace_period,
                 enable_emoticons=enable_emoticons,
-        ))
+            ))
 
     def guilds_integrations_delete(self, guild, integration):
         self.http(Routes.GUILDS_INTEGRATIONS_DELETE, dict(guild=guild, integration=integration))

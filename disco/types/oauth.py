@@ -1,6 +1,4 @@
-from disco.types.base import (
-    SlottedModel, Field, ListField, AutoDictField, snowflake, text, enum,
-)
+from disco.types.base import SlottedModel, Field, ListField, snowflake, text, enum
 from disco.types.guild import Integration
 from disco.types.user import User
 from disco.util.snowflake import to_snowflake
