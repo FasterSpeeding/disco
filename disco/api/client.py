@@ -584,8 +584,8 @@ class APIClient(LoggingClass):
         })
         return Channel.create(self.client, r.json())
 
-    def invites_get(self, invite):
-        r = self.http(Routes.INVITES_GET, dict(invite=invite))
+    def invites_get(self, invite, with_counts=None):
+        r = self.http(Routes.INVITES_GET, dict(invite=invite), json=optional(with_counts=with_counts))
         return Invite.create(self.client, r.json())
 
     def invites_delete(self, invite, reason=None):
