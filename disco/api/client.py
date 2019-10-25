@@ -106,7 +106,7 @@ class APIClient(LoggingClass):
         data = self.http(Routes.GATEWAY_BOT_GET).json()
         return data
 
-    def oauth2_token_get(self, grant_type, scope, code=None, refresh_token=None, redirect_url=None):
+    def oauth2_token_get(self, grant_type, scope, code=None, refresh_token=None, redirect_uri=None):
         payload = {
             'client_id': self.client.state.me.id,
             'client_secret': self.client.config.secret,
@@ -116,7 +116,7 @@ class APIClient(LoggingClass):
         payload.update(optional(
             code=code,
             refresh_token=refresh_token,
-            redirect_url=redirect_url,
+            redirect_uri=redirect_uri,
         ))
         r = self.http(Routes.OAUTH2_TOKEN, data=payload)
         return AccessToken.create(self.client, r.json())
