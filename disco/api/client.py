@@ -121,7 +121,7 @@ class APIClient(LoggingClass):
         r = self.http(Routes.OAUTH2_TOKEN, data=payload)
         return AccessToken.create(self.client, r.json())
 
-    def oauth_token_revoke(self, token):
+    def oauth2_token_revoke(self, token):
         self.http(Routes.OAUTH2_TOKEN_REVOKE, data={
             'client_id': self.client.state.me.id,
             'client_secret': self.client.config.secret,
