@@ -336,10 +336,10 @@ class State(object):
             return
 
         for presence in event.presences:
-            if presence.user.id not in self.users:
-                self.users[presence.user.id] = presence.user
-
-            self.users[presence.user.id].presence = presence
+            # TODO: this matches the recursive, hackfix method found in on_presence_update
+            user = presence.user
+            user.presence = presence
+            self.users[user.id].inplace_update(user)
 
     def on_guild_role_create(self, event):
         if event.guild_id not in self.guilds:
