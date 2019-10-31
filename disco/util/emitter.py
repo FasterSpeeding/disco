@@ -125,7 +125,7 @@ class Emitter(LoggingClass):
                     name,
                     listener.callback.__name__,
                     e.__class__.__name__,
-                    str(e),
+                    e,
                 ))
 
         # Next execute all AFTER handlers sequentially
@@ -137,7 +137,7 @@ class Emitter(LoggingClass):
                     name,
                     listener.callback.__name__,
                     e.__class__.__name__,
-                    str(e),
+                    e,
                 ))
 
         # Next enqueue all sequential handlers. This just puts stuff into a queue
