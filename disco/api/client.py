@@ -12,7 +12,10 @@ from disco.util.sanitize import S
 from disco.types.user import User
 from disco.types.message import Message
 from disco.types.oauth import AccessToken, Application, Connection
-from disco.types.guild import Guild, GuildMember, GuildBan, PruneCount, Role, GuildEmoji, AuditLogEntry, Integration
+from disco.types.guild import (
+    Guild, GuildMember, GuildBan, GuildEmbedm PruneCount, Role, GuildEmoji,
+    AuditLogEntry, Integration,
+)
 from disco.types.channel import Channel
 from disco.types.invite import Invite
 from disco.types.voice import VoiceRegion
@@ -53,8 +56,8 @@ class APIClient(LoggingClass):
     is the only path to the API used within models/other interfaces, and it's
     the recommended path for all third-party users/implementations.
 
-    Args
-    ----
+    Parameters
+    ----------
     token : str
         The Discord authentication token (without prefixes) to be used for all
         HTTP requests.
@@ -577,6 +580,18 @@ class APIClient(LoggingClass):
     def guilds_vanity_url_get(self, guild):
         r = self.http(Routes.GUILDS_VANITY_URL_GET, dict(guild=guild))
         return Invite.create(self.client, r.json())
+
+    def guilds_embed_get(self, guild):
+        r = self.http(Routes.GUILDS_EMBED_GET, dict(guild=guild))
+        return GuildEmbed.create(self.client, r.json())
+
+    def guilds_embed_modify(self, guild, reason=None, **kwargs):
+        r = self.http(
+            Routes.GUILDS_EMBED_MODIFY,
+            dict(guild=guild),
+            json=kwargs,
+            headers=_reason_header(reason))
+        return GuildEmbed.create(self.client, r.json())
 
     def guilds_webhooks_list(self, guild):
         r = self.http(Routes.GUILDS_WEBHOOKS_LIST, dict(guild=guild))

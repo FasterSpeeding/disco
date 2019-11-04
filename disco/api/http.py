@@ -247,7 +247,7 @@ class HTTPClient(LoggingClass):
             to create the requestable route. The HTTPClient uses this to track
             rate limits as well.
         kwargs : dict
-            Keyword arguments that will be passed along to the requests library
+            Keyword arguments that will be passed along to the requests library.
 
         Raises
         ------
@@ -258,7 +258,7 @@ class HTTPClient(LoggingClass):
         Returns
         -------
         :class:`requests.Response`
-            The response object for the request
+            The response object for the request.
         """
         args = args or {}
         retry = kwargs.pop('retry_number', 0)
@@ -321,7 +321,7 @@ class HTTPClient(LoggingClass):
         client suspects is transient. Will always return a value between 500 and
         5000 milliseconds.
 
-        :returns: a random backoff in milliseconds
+        :returns: a random backoff in milliseconds.
         :rtype: float
         """
         return random.randint(500, 5000) / 1000.0
