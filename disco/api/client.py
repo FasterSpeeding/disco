@@ -13,7 +13,7 @@ from disco.types.user import User
 from disco.types.message import Message
 from disco.types.oauth import AccessToken, Application, Connection
 from disco.types.guild import (
-    Guild, GuildMember, GuildBan, GuildEmbedm PruneCount, Role, GuildEmoji,
+    Guild, GuildMember, GuildBan, GuildEmbed, PruneCount, Role, GuildEmoji,
     AuditLogEntry, Integration,
 )
 from disco.types.channel import Channel
