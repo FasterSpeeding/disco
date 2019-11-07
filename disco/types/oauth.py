@@ -4,14 +4,6 @@ from disco.types.user import User
 from disco.util.snowflake import to_snowflake
 
 
-class AccessToken(SlottedModel):
-    access_token = Field(text)
-    token_type = Field(text)
-    expires_in = Field(int)
-    refresh_token = Field(text)
-    scope = Field(text)
-
-
 class TeamMembershipState(object):
     INVITED = 1
     ACCEPTED = 2
