@@ -41,11 +41,11 @@ class Application(SlottedModel):
     cover_image = Field(text)
 
     def user_is_owner(self, user):
-        user = to_snowflake(user)
-        if user == self.owner.id:
+        user_id = to_snowflake(user)
+        if user_id == self.owner.id:
             return True
 
-        return any(user == member.user.id for member in self.team.members)
+        return any(user_id == member.user.id for member in self.team.members)
 
     def get_icon_url(self, fmt='webp', size=1024):
         if not self.icon:
@@ -69,8 +69,8 @@ class Application(SlottedModel):
 
 
 class ConnectionVisibility(object):
-    Nobody = 0
-    Everyone = 1
+    NOBODY = 0
+    EVERYONE = 1
 
 
 class Connection(SlottedModel):
