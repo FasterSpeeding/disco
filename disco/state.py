@@ -285,9 +285,8 @@ class State(object):
         if event.member.guild_id not in self.guilds:
             return
 
-        if (self.guilds[event.member.guild_id].member_count is not UNSET and
-                # Avoid adding duplicate events to member_count.
-                event.member.id not in self.guilds[event.member.guild_id].members):
+        # Avoid adding duplicate events to member_count.
+        if event.member.id not in self.guilds[event.member.guild_id].members:
             self.guilds[event.member.guild_id].member_count += 1
 
         self.guilds[event.member.guild_id].members[event.member.id] = event.member
@@ -308,8 +307,7 @@ class State(object):
         if event.user.id not in self.guilds[event.guild_id].members:
             return
 
-        if self.guilds[event.guild_id].member_count is not UNSET:
-            self.guilds[event.guild_id].member_count -= 1
+        self.guilds[event.guild_id].member_count -= 1
 
         del self.guilds[event.guild_id].members[event.user.id]
 
