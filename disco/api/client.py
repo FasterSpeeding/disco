@@ -11,7 +11,7 @@ from disco.util.logging import LoggingClass
 from disco.util.sanitize import S
 from disco.types.user import User
 from disco.types.message import Message
-from disco.types.oauth import AccessToken, Application, Connection
+from disco.types.oauth import Application
 from disco.types.guild import (
     Guild, GuildMember, GuildBan, GuildEmbed, PruneCount, Role, GuildEmoji,
     AuditLogEntry, Integration,
@@ -34,10 +34,6 @@ def optional(**kwargs):
 
 def _reason_header(value):
     return optional(**{'X-Audit-Log-Reason': quote(to_bytes(value)) if value else None})
-
-
-def _oauth2_header(token):
-    return optional(**{'Authorization': 'Bearer {}'.format(token) if token else None})
 
 
 class Responses(list):
@@ -108,28 +104,6 @@ class APIClient(LoggingClass):
     def gateway_bot_get(self):
         data = self.http(Routes.GATEWAY_BOT_GET).json()
         return data
-
-    def oauth2_token_get(self, grant_type, scope, code=None, refresh_token=None, redirect_uri=None):
-        payload = {
-            'client_id': self.client.state.me.id,
-            'client_secret': self.client.config.secret,
-            'grant_type': grant_type,
-            'scope': scope,
-        }
-        payload.update(optional(
-            code=code,
-            refresh_token=refresh_token,
-            redirect_uri=redirect_uri,
-        ))
-        r = self.http(Routes.OAUTH2_TOKEN, data=payload)
-        return AccessToken.create(self.client, r.json())
-
-    def oauth2_token_revoke(self, token):
-        self.http(Routes.OAUTH2_TOKEN_REVOKE, data={
-            'client_id': self.client.state.me.id,
-            'client_secret': self.client.config.secret,
-            'token': token,
-        })
 
     def oauth2_applications_me_get(self):
         r = self.http(Routes.OAUTH2_APPLICATIONS_ME)
@@ -646,7 +620,7 @@ class APIClient(LoggingClass):
         return User.create(self.client, r.json())
 
     def users_me_get(self, bearer_token=None):
-        r = self.http(Routes.USERS_ME_GET, headers=_oauth2_header(bearer_token))
+        r = self.http(Routes.USERS_ME_GET)
         return User.create(self.client, r.json())
 
     def users_me_patch(self, payload):
@@ -654,7 +628,7 @@ class APIClient(LoggingClass):
         return User.create(self.client, r.json())
 
     def users_me_guilds_list(self, bearer_token=None):
-        r = self.http(Routes.USERS_ME_GUILDS_LIST, headers=_oauth2_header(bearer_token))
+        r = self.http(Routes.USERS_ME_GUILDS_LIST)
         return Guild.create_hash(self.client, 'id', r.json())
 
     def users_me_guilds_delete(self, guild):
@@ -667,7 +641,7 @@ class APIClient(LoggingClass):
         return Channel.create(self.client, r.json())
 
     def users_me_connections_list(self, bearer_token=None):
-        r = self.http(Routes.USERS_ME_CONNECTIONS_LIST, headers=_oauth2_header(bearer_token))
+        r = self.http(Routes.USERS_ME_CONNECTIONS_LIST)
         return Connection.create_map(self.client, r.json())
 
     def invites_get(self, invite):
