@@ -619,7 +619,7 @@ class APIClient(LoggingClass):
         r = self.http(Routes.USERS_GET, dict(user=user))
         return User.create(self.client, r.json())
 
-    def users_me_get(self, bearer_token=None):
+    def users_me_get(self):
         r = self.http(Routes.USERS_ME_GET)
         return User.create(self.client, r.json())
 
@@ -627,7 +627,7 @@ class APIClient(LoggingClass):
         r = self.http(Routes.USERS_ME_PATCH, json=payload)
         return User.create(self.client, r.json())
 
-    def users_me_guilds_list(self, bearer_token=None):
+    def users_me_guilds_list(self):
         r = self.http(Routes.USERS_ME_GUILDS_LIST)
         return Guild.create_hash(self.client, 'id', r.json())
 
@@ -640,7 +640,7 @@ class APIClient(LoggingClass):
         })
         return Channel.create(self.client, r.json())
 
-    def users_me_connections_list(self, bearer_token=None):
+    def users_me_connections_list(self):
         r = self.http(Routes.USERS_ME_CONNECTIONS_LIST)
         return Connection.create_map(self.client, r.json())
 
