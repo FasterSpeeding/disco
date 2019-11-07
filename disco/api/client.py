@@ -11,7 +11,7 @@ from disco.util.logging import LoggingClass
 from disco.util.sanitize import S
 from disco.types.user import User
 from disco.types.message import Message
-from disco.types.oauth import Application
+from disco.types.oauth import Application, Connection
 from disco.types.guild import (
     Guild, GuildMember, GuildBan, GuildEmbed, PruneCount, Role, GuildEmoji,
     AuditLogEntry, Integration,
