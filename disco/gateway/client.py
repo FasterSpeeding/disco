@@ -9,7 +9,6 @@ from websocket import ABNF
 from disco.gateway.packets import OPCode, RECV, SEND
 from disco.gateway.events import GatewayEvent
 from disco.gateway.encoding import ENCODERS
-from disco.util.functional import optional
 from disco.util.websocket import Websocket
 from disco.util.logging import LoggingClass
 from disco.util.limiter import SimpleLimiter
