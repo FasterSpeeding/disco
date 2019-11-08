@@ -34,6 +34,12 @@ class Routes(object):
     GATEWAY_GET = (HTTPMethod.GET, '/gateway')
     GATEWAY_BOT_GET = (HTTPMethod.GET, '/gateway/bot')
 
+    # OAUTH2
+    OAUTH2 = '/oauth2'
+    OAUTH2_TOKEN = (HTTPMethod.POST, OAUTH2 + '/token')
+    OAUTH2_TOKEN_REVOKE = (HTTPMethod.POST, OAUTH2 + '/token/revoke')
+    OAUTH2_APPLICATIONS_ME = (HTTPMethod.GET, OAUTH2 + '/applications/@me')
+
     # Channels
     CHANNELS = '/channels/{channel}'
     CHANNELS_GET = (HTTPMethod.GET, CHANNELS)
@@ -178,7 +184,9 @@ class APIException(Exception):
                 self.msg = '{} ({} - {})'.format(data['message'], self.code, self.errors)
             elif len(data) == 1:
                 key, value = list(data.items())[0]
-                self.msg = 'Request Failed: {}: {}'.format(key, ', '.join(value))
+                if not isinstance(value, str):
+                    value = ', '.join(value)
+                self.msg = 'Request Failed: {}: {}'.format(key, value)
         except ValueError:
             pass
 
@@ -239,7 +247,7 @@ class HTTPClient(LoggingClass):
             to create the requestable route. The HTTPClient uses this to track
             rate limits as well.
         kwargs : dict
-            Keyword arguments that will be passed along to the requests library
+            Keyword arguments that will be passed along to the requests library.
 
         Raises
         ------
@@ -250,7 +258,7 @@ class HTTPClient(LoggingClass):
         Returns
         -------
         :class:`requests.Response`
-            The response object for the request
+            The response object for the request.
         """
         args = args or {}
         retry = kwargs.pop('retry_number', 0)
@@ -313,7 +321,7 @@ class HTTPClient(LoggingClass):
         client suspects is transient. Will always return a value between 500 and
         5000 milliseconds.
 
-        :returns: a random backoff in milliseconds
+        :returns: a random backoff in milliseconds.
         :rtype: float
         """
         return random.randint(500, 5000) / 1000.0
