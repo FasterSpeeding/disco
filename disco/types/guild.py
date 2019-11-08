@@ -450,8 +450,11 @@ class Guild(SlottedModel, Permissible):
 
         return self.client.api.guilds_roles_modify(self.id, to_snowflake(role), **kwargs)
 
-    def request_guild_members(self, query=None, limit=0, user_id_or_ids=None, presences=None):
-        self.client.gw.request_guild_members(self.id, query, limit, user_id_or_ids, presences)
+    def request_guild_members(self, query=None, limit=0, presences=False):
+        self.client.gw.request_guild_members(self.id, query, limit, presences)
+
+    def request_guild_members_by_id(self, user_id_or_ids, limit=0, presences=False):
+        self.client.gw.request_guild_members_by_id(self.id, user_id_or_ids, limit, presences)
 
     def sync(self):
         warnings.warn(

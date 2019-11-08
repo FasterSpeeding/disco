@@ -267,21 +267,27 @@ class GatewayClient(LoggingClass):
         gevent.spawn(self.connect_and_run)
         self.ws_event.wait()
 
-    def request_guild_members(self, guild_id_or_ids, query=None, limit=0, user_id_or_ids=None, presences=None):
+    def request_guild_members(self, guild_id_or_ids, query=None, limit=0, presences=False):
         """
         Request a batch of Guild members from Discord. Generally this function
         can be called when initially loading Guilds to fill the local member state.
-        When calling this function, if user_id_or_ids is passed then query will be ignored.
         """
-        payload = {
+        self.send(OPCode.REQUEST_GUILD_MEMBERS, {
             # This is simply unfortunate naming on the part of Discord...
             'guild_id': guild_id_or_ids,
             'limit': limit,
-        }
-        payload.update(optional(
-            # This is simply Discord sticking to an unfortunate naming scheme...
-            user_ids=user_id_or_ids,
-            query=query or '' if user_id_or_ids is None else None,
-            presences=presences,
-        ))
-        self.send(OPCode.REQUEST_GUILD_MEMBERS, payload)
+            'presences': presences,
+            'query': query or '',
+        })
+
+    def request_guild_members_by_id(self, guild_id_or_ids, user_id_or_ids, limit=0, presences=False):
+        """
+        Request a batch of Guild members from Discord by their snowflake(s).
+        """
+        self.send(OPCode.REQUEST_GUILD_MEMBERS, {
+            'guild_id': guild_id_or_ids,
+            'limit': limit,
+            'presences': presences,
+            # This is simply even more unfortunate naming from Discord...
+            'user_ids': user_id_or_ids,
+        })
