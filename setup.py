@@ -28,7 +28,7 @@ setup(
     author='b1nzy',
     url='https://github.com/b1naryth1ef/disco',
     version=VERSION,
-    packages=find_packages(exclude=["examples", "tests"]),
+    packages=find_packages(exclude=['examples', 'examples.', 'tests', 'tests.*']),
     license='MIT',
     description='A Python library for Discord',
     long_description=readme,
