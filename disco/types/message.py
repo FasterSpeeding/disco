@@ -378,6 +378,8 @@ class MessageFlags(BitsetMap):
     CROSSPOSTED = 1 << 0
     IS_CROSSPOST = 1 << 1
     SUPPRESS_EMBEDS = 1 << 2
+    SOURCE_MESSAGE_DELETED = 1 << 3
+    URGENT = 1 << 4
 
 
 class MessageFlagValue(BitsetValue):
@@ -543,11 +545,16 @@ class Message(SlottedModel):
         """
         Toggle this message's embed suppression.
 
-        Args
-        ----
+        Parameters
+        ----------
         `state`
             Whether this message's embeds should be suppressed,
             will just flip the state if not provided.
+
+        Returns
+        -------
+        `bool`
+            The new state of the message's embed suppression.
         """
         flags = int(self.flags or 0)
         if state is None:
