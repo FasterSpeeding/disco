@@ -541,24 +541,16 @@ class Message(SlottedModel):
         """
         return self.client.api.channels_messages_delete(self.channel_id, self.id)
 
-    def toggle_embeds_suppress(self, state=None):
+    def set_embeds_suppressed(self, state):
         """
         Toggle this message's embed suppression.
 
         Parameters
         ----------
         `state`
-            Whether this message's embeds should be suppressed,
-            will just flip the state if not provided.
-
-        Returns
-        -------
-        `bool`
-            The new state of the message's embed suppression.
+            Whether this message's embeds should be suppressed.
         """
         flags = int(self.flags or 0)
-        if state is None:
-            state = not self.flags or not self.flags.SUPPRESS_EMBEDS
 
         if state:
             flags |= MessageFlags.SUPPRESS_EMBEDS
@@ -566,7 +558,6 @@ class Message(SlottedModel):
             flags &= ~MessageFlags.SUPPRESS_EMBEDS
 
         self.edit(flags=flags)
-        return state
 
     def get_reactors(self, emoji, *args, **kwargs):
         """
